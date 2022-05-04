@@ -410,7 +410,6 @@ contract Vesting is
         uint256 countVestId = 0;
 
         for (uint256 i = 0; i < _vestingIdsList.length; i++) {
-
             if(_isClaimableVesting(_vestingIdsList[i])) {
                 countVestId++;
             }
