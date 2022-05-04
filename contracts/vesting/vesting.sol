@@ -410,14 +410,8 @@ contract Vesting is
         uint256 countVestId = 0;
 
         for (uint256 i = 0; i < _vestingIdsList.length; i++) {
-            (uint256 _claimable, , ) = _computeClaimable(_vestingIdsList[i]);
 
-            if (
-                vestingInfors[_vestingIdsList[i]].status ==
-                VestingStatus.ACTIVE &&
-                vestingInfors[_vestingIdsList[i]].wallet == _msgSender() &&
-                _claimable > 0
-            ) {
+            if(_isClaimableVesting(_vestingIdsList[i])) {
                 countVestId++;
             }
         }
