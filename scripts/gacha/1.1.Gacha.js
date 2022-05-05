@@ -4,6 +4,7 @@ const { DEV } = require('../.deployment_data_test.json');
 const decimals = 10 ** 18;
 const proxyType = { kind: "uups" };
 const CONTRACT_NAME = "Gacha";
+const verichainAddress = "0x4141cADa751Aeb18bc2AE51065ea7e86Da379Dc4"
 
 async function main() {
 
@@ -17,7 +18,7 @@ async function main() {
 
   const GachaFactory = await hre.ethers.getContractFactory(CONTRACT_NAME)
   const GachaArtifact = await hre.artifacts.readArtifact(CONTRACT_NAME)
-  const GachaContract = await hre.upgrades.deployProxy(GachaFactory, [deployer.address, DEV.BOX], proxyType)
+  const GachaContract = await hre.upgrades.deployProxy(GachaFactory, [deployer.address, DEV.BOX, verichainAddress], proxyType)
   await GachaContract.deployed()
 
   const ImplementationAddress = await hre.upgrades.erc1967.getImplementationAddress(GachaContract.address)
