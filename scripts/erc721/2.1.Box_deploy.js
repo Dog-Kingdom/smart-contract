@@ -19,9 +19,6 @@ async function main() {
   const BoxContract = await hre.upgrades.deployProxy(BoxFactory, ["Gacha Box", "GBox", deployer.address], proxyType)
   await BoxContract.deployed()
 
-  // string memory name_,
-  // string memory symbol_,
-  // address ownerAddress_
 
   const ImplementationAddress = await hre.upgrades.erc1967.getImplementationAddress(BoxContract.address)
   console.log("====================================================")

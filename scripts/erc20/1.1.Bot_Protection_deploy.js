@@ -24,7 +24,8 @@ async function main() {
       objConstructor.addressSellLimit,
       objConstructor.dexBuyLimit,
       objConstructor.dexSellLimit,
-      objConstructor.blockTransferLimit
+      objConstructor.blockTransferLimit,
+      objConstructor.ownerAddress
     ],   // Provide constructor parameters here
     {kind: "uups"}
   );

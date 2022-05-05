@@ -15,20 +15,16 @@ const deployArguments = {
 async function main() {
   const [deployer] = await hre.ethers.getSigners()
 
-  const DKTokenFactory = await hre.ethers.getContractFactory(CONTRACT_NAME);
-  const DKTokenArtifact = await hre.artifacts.readArtifact(CONTRACT_NAME);
-  const DKTokenContract = await DKTokenFactory.deploy(
+  const DoKoTokenFactory = await hre.ethers.getContractFactory(CONTRACT_NAME)
+  const DoKoTokenContract = await DoKoTokenFactory.deploy(
     deployArguments.tokenName,
     deployArguments.tokenSymbol,
     deployArguments.maxSupply, 
     deployArguments.ownerAddress)
-  await DKTokenContract.deployed();
+  await DoKoTokenContract.deployed()
 
-  const DKImplementationAddress = await hre.upgrades.erc1967.getImplementationAddress(DKTokenContract.address);
   console.log("====================================================")
-  console.log("DK Token proxy address: ", DKTokenContract.address)
-  console.log("====================================================")
-  console.log(`\x1b[36m${DKTokenArtifact.contractName}\x1b[0m implementation address: \x1b[36m${DKImplementationAddress}\x1b[0m\n\r`);
+  console.log("DK Token proxy address: ", DoKoTokenContract.address)
 }
 
 main()

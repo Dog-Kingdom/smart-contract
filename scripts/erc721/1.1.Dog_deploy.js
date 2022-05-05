@@ -19,10 +19,6 @@ async function main() {
   const DogContract = await hre.upgrades.deployProxy(DogFactory, ["Dog kingdom", "Dog", deployer.address], proxyType)
   await DogContract.deployed()
 
-  // string memory name_,
-  // string memory symbol_,
-  // address ownerAddress_
-
   const ImplementationAddress = await hre.upgrades.erc1967.getImplementationAddress(DogContract.address)
   console.log("====================================================")
   console.log("Dog proxy address: ", DogContract.address)

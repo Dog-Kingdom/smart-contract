@@ -9,6 +9,7 @@ import "@openzeppelin/contracts-upgradeable/utils/AddressUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/CountersUpgradeable.sol";
 import "../utils/ArrayLib.sol";
+import "hardhat/console.sol";
 
 contract Vesting is
     UUPSUpgradeable,
@@ -54,6 +55,7 @@ contract Vesting is
         uint256 cliffTime;
         uint256 percents;
         uint256 totalPhase;
+        uint256 zoom;
         bool isEffected;
     }
 
@@ -410,6 +412,7 @@ contract Vesting is
         uint256 countVestId = 0;
 
         for (uint256 i = 0; i < _vestingIdsList.length; i++) {
+            console.log("claim function: ", _isClaimableVesting(_vestingIdsList[i]));
             if(_isClaimableVesting(_vestingIdsList[i])) {
                 countVestId++;
             }
@@ -531,11 +534,14 @@ contract Vesting is
             uint256,
             uint256
         )
-    {
+    {   
+        
         uint256 claimable = 0;
         VestingInformation memory vestingInfo = vestingInfors[_vestingId];
         SchemeInformation memory schemeInfo = schemeInfos[vestingInfo.schemeId];
 
+        uint256 roundClaimed = vestingInfo.roundClaimed;
+        uint256 phaseClaimed = vestingInfo.phaseClaimed;
         if (
             block.timestamp < vestingInfo.endTime &&
             block.timestamp > vestingInfo.startTime &&
@@ -553,10 +559,13 @@ contract Vesting is
                 j++
             ) {
                 Round memory round = schemeInfo.rounds[j];
-                vestingInfo.roundClaimed = j;
+                roundClaimed = j;
+                if(roundClaimed != vestingInfo.roundClaimed) {
+                    phaseClaimed = 0;
+                }
                 for (
-                    uint256 i = vestingInfo.phaseClaimed + 1;
-                    i <= schemeInfo.rounds[vestingInfo.roundClaimed].totalPhase;
+                    uint256 i = phaseClaimed + 1;
+                    i <= schemeInfo.rounds[roundClaimed].totalPhase;
                     i++
                 ) {
                     timeFromStart = timeFromStart + round.cliffTime;
@@ -570,17 +579,18 @@ contract Vesting is
                     }
 
                     totalPercent = totalPercent + round.percents;
-                    vestingInfo.phaseClaimed++;
-                }
-                if (timeFromStart > block.timestamp) {
-                    break;
+                    phaseClaimed++;
                 }
                 claimable = ((vestingInfo.totalAmount * totalPercent) / ZOOM);
+                if (schemeInfo.rounds[roundClaimed].totalPhase < phaseClaimed) {
+                    break;
+                }
+                
             }
         } else if (block.timestamp >= vestingInfo.endTime) {
             claimable = vestingInfo.totalAmount - vestingInfo.claimedAmount;
         }
-        return (claimable, vestingInfo.roundClaimed, vestingInfo.phaseClaimed);
+        return (claimable, roundClaimed, phaseClaimed);
     }
 
     function _validateScheme(string memory name, uint256 vestTime)
@@ -596,7 +606,7 @@ contract Vesting is
     }
 
     // function _addMonthTest() internal pure returns(uint256) {
-    //   return 30*24;
+    //     return 30*24;
     // }
 
     function _isClaimableVesting(uint256 _vestingId)
@@ -604,6 +614,10 @@ contract Vesting is
         view
         returns (bool)
     {
+        
+        if(!_existVesting(_vestingId)) {
+            return false;
+        }
         VestingInformation memory vestingInfo = vestingInfors[_vestingId];
         (uint256 availableAmount, , ) = _computeClaimable(_vestingId);
         if (
@@ -657,6 +671,7 @@ contract Vesting is
     }
 
     function _existVesting(uint256 _vestingId) internal view returns (bool) {
+        console.log("startTime: ", vestingInfors[_vestingId].startTime);
         if (vestingInfors[_vestingId].startTime > 0) {
             return true;
         }
