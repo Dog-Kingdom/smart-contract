@@ -3,7 +3,7 @@ const { DEV } = require('../.deployment_data_test.json');
 
 const CONTRACT_NAME_V1 = "Deposit"
 const CONTRACT_NAME_V2 = "Deposit"
-const PROXY_ADDRESS = DEV.deposit
+const PROXY_ADDRESS = DEV.DEPOSIT
 const params = {
   decimals: 10 ** 18,
 }

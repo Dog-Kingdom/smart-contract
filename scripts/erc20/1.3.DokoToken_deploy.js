@@ -1,5 +1,4 @@
 const hre = require("hardhat");
-const { Proxies } = require('../.deployment_data_test.json');
 
 const decimals = 10 ** 18;
 

@@ -25,9 +25,6 @@ describe("Vesting",async function () {
     _dokoContract = await DKTokenContract.deployed()
     const mintToken = await _dokoContract.connect(_owner).mint(_owner.address,BigInt(10000 * decimals))
     await mintToken.wait()
-    console.log("_dokoContract.address", _dokoContract.address)
-    console.log("<======================================================>")
-    console.log("_deployer.address", _deployer.address)
     const dokoAddress = _dokoContract.address
     const deployerAddress = _deployer.address
     const vestingContract = await upgrades.deployProxy(vestingArtifact, [dokoAddress, deployerAddress], { kind: "uups"})
@@ -43,12 +40,13 @@ describe("Vesting",async function () {
         0,
         4,
         1,
+        100,
         false
       ],
       [
         0,
         4,
-        1,
+        1,100,
         false
       ]
     ]
@@ -70,13 +68,13 @@ describe("Vesting",async function () {
       [
         0,
         4,
-        1,
+        1,100,
         false
       ],
       [
         0,
         4,
-        1,
+        1,100,
         false
       ]
     ]
@@ -98,13 +96,13 @@ describe("Vesting",async function () {
       [
         0,
         500,
-        1,
+        1,100,
         false
       ],
       [
         0,
         250,
-        2,
+        2,100,
         true
       ]
     ]
@@ -132,13 +130,13 @@ describe("Vesting",async function () {
       [
         0,
         500,
-        1,
+        1,100,
         false
       ],
       [
         0,
         500,
-        1,
+        1,100,
         false
       ]
     ]
@@ -161,13 +159,13 @@ describe("Vesting",async function () {
       [
         0,
         500,
-        1,
+        1,100,
         false
       ],
       [
         0,
         500,
-        1,
+        1,100,
         false
       ]
     ]
@@ -296,12 +294,14 @@ describe("Vesting",async function () {
         0,
         500,
         1,
+        100,
         false
       ],
       [
         0,
         500,
         1,
+        100,
         false
       ]
     ]
@@ -324,8 +324,8 @@ describe("Vesting",async function () {
     const transaction = await _vestingContract.connect(_owner).claim(listIds)
     const txData = await transaction.wait()
     const event = txData.events[0].args
+    console.log({event})
     expect(event.amount).to.not.NaN
-    
   })
   
   it("should emit with event newVestings", async function () {
@@ -418,7 +418,9 @@ describe("Vesting",async function () {
     const vestingList = [5,6,7]
     const transaction = await _vestingContract.connect(_owner).claim(vestingList)
     const txData = await transaction.wait()
+    console.log({txData})
     const event = txData.events[1].args
+    console.log({event})
     expect(event.amount).to.not.equal(BigInt(0))
     for (let i = 0; i < event.vestingIds; i++) {
       expect(event.vestingIds[i]).equal(i+1)
@@ -429,26 +431,10 @@ describe("Vesting",async function () {
     await expect(_vestingContract.connect(_user1).cancelVesting(1)).to.be.revertedWith("Vesting: Sender is not operator");
   })
 
-  it("should revert with message `vesting not found`", async () => {
-    await expect(_vestingContract.updateVesting(
-      0,
-      {
-        wallet: _owner.address,
-        schemeId: 1,
-        startTime: parseInt(Date.now()/1000 + 15),
-        totalAmount: BigInt(10 *decimals),
-        vestedAmount: 0
-      }
-    )).to.be.revertedWith("vesting not found")
-    
-  })
-
   it("should revert with message `vesting not found`", async() => {
     
     const checkBalanceOfBefore = await _dokoContract.balanceOf(_owner.address)
-    console.log({checkBalanceOfBefore})
     const checkAllowance = await _dokoContract.allowance(_owner.address, _vestingContract.address);
-    console.log({checkAllowance})
 
     await expect( _vestingContract.connect(_owner).updateVesting(
       0,
@@ -516,9 +502,6 @@ describe("Vesting",async function () {
     const vestingData = await createVesting.wait()
     const vestingEvent = vestingData.events[2].args
     const checkBalanceOfBefore = await _dokoContract.balanceOf(_owner.address)
-    console.log({checkBalanceOfBefore})
-    const checkAllowance = await _dokoContract.allowance(_owner.address, _vestingContract.address);
-    console.log({checkAllowance})
 
     const transaction = await _vestingContract.connect(_owner).updateVesting(
       vestingEvent.vestingBcId,
@@ -530,9 +513,7 @@ describe("Vesting",async function () {
         vestedAmount: 0
       }
     )
-    const txData = await transaction.wait()
-    console.log({txData})
-    const event = txData.events[1].args
+    await transaction.wait()
     const checkBalanceOfAfter = await _dokoContract.balanceOf(_deployer.address)
     expect(checkBalanceOfBefore).to.above(checkBalanceOfAfter)
   })
@@ -545,7 +526,7 @@ describe("Vesting",async function () {
   })
 
   it("should emit with event claim and amount equal 0", async () => {
-    const vestingList = [5,6,7]
+    const vestingList = [5,6]
     const transaction = await _vestingContract.connect(_owner).claim(vestingList)
     const txData = await transaction.wait()
     const event = txData.events[0].args

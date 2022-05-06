@@ -23,7 +23,7 @@ async function main() {
   const vaultFactory = await hre.ethers.getContractFactory(CONTRACT_NAME)
   const VaultArtifact = await hre.artifacts.readArtifact(CONTRACT_NAME)
 
-  const VaultContract = await hre.upgrades.deployProxy(vaultFactory,deployArguments.ownerAddress, params.proxyType)
+  const VaultContract = await hre.upgrades.deployProxy(vaultFactory,[deployArguments.ownerAddress], params.proxyType)
   await VaultContract.deployed()
 
   const ImplementationAddress = await hre.upgrades.erc1967.getImplementationAddress(VaultContract.address)

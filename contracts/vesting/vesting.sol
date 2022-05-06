@@ -412,7 +412,6 @@ contract Vesting is
         uint256 countVestId = 0;
 
         for (uint256 i = 0; i < _vestingIdsList.length; i++) {
-            console.log("claim function: ", _isClaimableVesting(_vestingIdsList[i]));
             if(_isClaimableVesting(_vestingIdsList[i])) {
                 countVestId++;
             }
@@ -452,7 +451,7 @@ contract Vesting is
         }
         require(
             IERC20Upgradeable(erc20Token).balanceOf(address(this)) >= claimable,
-            "contract dont have enough token to transfer"
+            "contract dont have enough token"
         );
         if (claimable != 0) {
             IERC20Upgradeable(erc20Token).transfer(msg.sender, claimable);
@@ -486,11 +485,46 @@ contract Vesting is
     function getVestingById(uint256 _vestingId)
         external
         view
-        returns (VestingInformation memory vestingInfo)
+        returns (
+            address wallet,
+            uint256 schemeId,
+            uint256 startTime,
+            uint256 endTime,
+            uint256 totalAmount,
+            uint256 vestedAmount,
+            uint256 claimedAmount,
+            uint256 roundClaimed,
+            uint256 phaseClaimed,
+            VestingStatus status,
+            uint256 claimable
+        )
     {
         require(_existVesting(_vestingId), "Vesting not found");
-        vestingInfo = vestingInfors[_vestingId];
-        return vestingInfo;
+        VestingInformation memory vestingInfo = vestingInfors[_vestingId];
+        wallet = vestingInfo.wallet;
+        schemeId = vestingInfo.schemeId;
+        startTime = vestingInfo.startTime;
+        endTime = vestingInfo.endTime;
+        totalAmount = vestingInfo.totalAmount;
+        vestedAmount =vestingInfo.vestedAmount;
+        claimedAmount = vestingInfo.claimedAmount;
+        roundClaimed = vestingInfo.roundClaimed;
+        phaseClaimed = vestingInfo.phaseClaimed;
+        status = vestingInfo.status;
+        (claimable, , ) = _computeClaimable(_vestingId);
+        return (
+            wallet,
+            schemeId,
+            startTime,
+            endTime,
+            totalAmount,
+            vestedAmount,
+            claimedAmount,
+            roundClaimed,
+            phaseClaimed,
+            status,
+            claimable
+        );
     }
 
     function getVestingByWallet(address wallet)
@@ -559,8 +593,8 @@ contract Vesting is
                 j++
             ) {
                 Round memory round = schemeInfo.rounds[j];
-                roundClaimed = j;
-                if(roundClaimed != vestingInfo.roundClaimed) {
+                roundClaimed = j; // lan 1 = 0
+                if(roundClaimed != vestingInfo.roundClaimed) { 
                     phaseClaimed = 0;
                 }
                 for (
@@ -570,7 +604,7 @@ contract Vesting is
                 ) {
                     timeFromStart = timeFromStart + round.cliffTime;
                     // add a month in case current round is not tge or first round
-                    if ((round.isEffected && j == 0) || j != 0) {
+                    if (round.isEffected) {
                         timeFromStart = timeFromStart + _addMonth();
                     }
 
@@ -582,6 +616,11 @@ contract Vesting is
                     phaseClaimed++;
                 }
                 claimable = ((vestingInfo.totalAmount * totalPercent) / ZOOM);
+                if(phaseClaimed == 0 && roundClaimed != 0) {
+                    roundClaimed = j - 1;
+                    phaseClaimed = schemeInfo.rounds[roundClaimed].totalPhase;
+                    break;
+                }
                 if (schemeInfo.rounds[roundClaimed].totalPhase < phaseClaimed) {
                     break;
                 }
@@ -671,7 +710,6 @@ contract Vesting is
     }
 
     function _existVesting(uint256 _vestingId) internal view returns (bool) {
-        console.log("startTime: ", vestingInfors[_vestingId].startTime);
         if (vestingInfors[_vestingId].startTime > 0) {
             return true;
         }
